@@ -1,0 +1,4 @@
+include ':jsengine'
+include ':quickjs'
+include ':app'
+rootProject.name = "Quickjs4Android"
