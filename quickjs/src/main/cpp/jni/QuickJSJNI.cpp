@@ -16,9 +16,8 @@ static jlong CreateJSRuntime(JNIEnv *env, jclass clazz) {
 
 static jint EvalExpr(JNIEnv *env, jclass clazz, jlong instance, jstring expr) {
     QuickJS *js = reinterpret_cast<QuickJS * >(instance);
-    JSContext *ctx = js->createNewQJSContext();
     const char *nativeString = env->GetStringUTFChars(expr, 0);
-    int ret = QuickJS::eval_expr(ctx, nativeString);
+    int ret = QuickJS::eval_expr(js->getQJSContext(), nativeString);
     env->ReleaseStringUTFChars(expr, nativeString);
     return reinterpret_cast<jint >(ret);
 }

@@ -13,6 +13,8 @@ message("==============${PROJECT_NAME}===============")
 set ( CMAKE_VERBOSE_MAKEFILE on  )
 
 include("quickjs.cmake")
+include("qjsmodule.cmake")
+
 #FetchContent_GetProperties(quickjs)
 #if(NOT quickjs_POPULATED)
 #    FetchContent_Populate(quickjs)
@@ -27,8 +29,9 @@ include("quickjs.cmake")
 include_directories(${CMAKE_SOURCE_DIR}/ ${CMAKE_SOURCE_DIR}/jni/ ${CMAKE_SOURCE_DIR}/include/)
 LINK_DIRECTORIES(${CMAKE_SOURCE_DIR}/libs/)
 
-file(GLOB_RECURSE CPP_SRCS jni/*.cpp *.cpp)
+file(GLOB_RECURSE CPP_SRCS jni/*.cpp *.cpp module/*.c)
 
+find_library(log-lib log )
 
 
 
@@ -41,12 +44,7 @@ file(GLOB_RECURSE CPP_SRCS jni/*.cpp *.cpp)
 # you want to add. CMake verifies that the library exists before
 # completing its build.
 
-find_library( # Sets the name of the path variable.
-              log-lib
 
-              # Specifies the name of the NDK library that
-              # you want CMake to locate.
-              log )
 
 ##导入第三方依赖库
 #add_library(

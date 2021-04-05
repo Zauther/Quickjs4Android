@@ -28,7 +28,10 @@ public class ExampleInstrumentedTest {
 
         QJSRuntime runtime =QuickJS.createJSRuntime();
         Log.d("test","runtime: "+runtime.getInstance());
-        int ret = runtime.run("console.log('hello test')");
+        String script ="import { fib } from 'libndklogmodule.so';\n"
+                +"fib(10);\n"
+                +"console.log('hello test');\n";
+        int ret = runtime.run("std.sprintf(\"a=%d s=%s\", 123, \"abc\")");
         Log.d("test","result: "+runtime.getInstance());
     }
 }

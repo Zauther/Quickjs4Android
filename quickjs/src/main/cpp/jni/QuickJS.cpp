@@ -9,25 +9,65 @@
 #include <cutils.h>
 #include <cstring>
 
-JSRuntime *QuickJS::createNewQJSRuntime() {
-    qjsRuntime = JS_NewRuntime();
-    if (!qjsRuntime)
-        return nullptr;
-    return qjsRuntime;
+int has_suffix(const char *str, const char *suffix)
+{
+    size_t len = strlen(str);
+    size_t slen = strlen(suffix);
+    return (len >= slen && !memcmp(str + len - slen, suffix, slen));
+}
+JSContext * JS_NewCustomContext(JSRuntime *rt) {
+    JSContext *ctx;
+    ctx = JS_NewContext(rt);
+    if (!ctx)
+        return NULL;
+#ifdef CONFIG_BIGNUM
+    if (bignum_ext) {
+        JS_AddIntrinsicBigFloat(ctx);
+        JS_AddIntrinsicBigDecimal(ctx);
+        JS_AddIntrinsicOperators(ctx);
+        JS_EnableBignumExt(ctx, TRUE);
+    }
+#endif
+    /* system modules */
+    js_init_module_std(ctx, "std");
+    js_init_module_os(ctx, "os");
+    return ctx;
 }
 
-JSContext *QuickJS::createNewQJSContext() {
-    if (!qjsRuntime) {
+JSRuntime *QuickJS::createNewQJSRuntime() {
+    runtime = JS_NewRuntime();
+    if (!runtime)
+        return nullptr;
+    js_std_set_worker_new_context_func(JS_NewCustomContext);
+    js_std_init_handlers(runtime);
+    context = JS_NewCustomContext(runtime);
+    if(!context){
         return nullptr;
     }
-    qjsContext = JS_NewContext(qjsRuntime);
-    if (!qjsContext) {
-        return nullptr;
-    }
-    js_init_module_std(qjsContext, "std");
-    js_init_module_os(qjsContext, "os");
-    JS_SetModuleLoaderFunc(qjsRuntime, nullptr, js_module_loader, nullptr);
-    return qjsContext;
+    /* loader for ES6 modules */
+    JS_SetModuleLoaderFunc(runtime, NULL, js_module_loader, NULL);
+    const char *str = "import * as std from 'std';\n"
+                      "import * as os from 'os';\n"
+                      "globalThis.std = std;\n"
+                      "globalThis.os = os;\n";
+    eval_buf(context, str, strlen(str), "<input>", JS_EVAL_TYPE_MODULE);
+    return runtime;
+}
+
+JSContext *QuickJS::getQJSContext() {
+//    if (!qjsRuntime) {
+//        return nullptr;
+//    }
+//    qjsContext = JS_NewContext(qjsRuntime);
+//    if (!qjsContext) {
+//        return nullptr;
+//    }
+//
+//    js_init_module_std(qjsContext, "std");
+//    js_init_module_os(qjsContext, "os");
+//
+//    JS_SetModuleLoaderFunc(qjsRuntime, nullptr, js_module_loader, nullptr);
+    return context;
 }
 
 int QuickJS::eval_buf(JSContext *ctx, const void *buf, int buf_len,
@@ -67,11 +107,10 @@ int QuickJS::eval_file(JSContext *ctx, const char *filename, int module) {
         perror(filename);
         exit(1);
     }
-
-//    if (module < 0) {
-//        module = (has_suffix(filename, ".mjs") ||
-//                  JS_DetectModule((const char *) buf, buf_len));
-//    }
+    if (module < 0) {
+        module = (has_suffix(filename, ".mjs") ||
+                  JS_DetectModule((const char *) buf, buf_len));
+    }
     if (module)
         eval_flags = JS_EVAL_TYPE_MODULE;
     else
@@ -84,3 +123,4 @@ int QuickJS::eval_file(JSContext *ctx, const char *filename, int module) {
 int QuickJS::eval_expr(JSContext *ctx,const char *expr) {
     return QuickJS::eval_buf(ctx, expr, strlen(expr), "<cmdline>", 0);
 }
+

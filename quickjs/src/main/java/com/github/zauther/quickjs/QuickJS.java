@@ -14,14 +14,7 @@ public class QuickJS {
     public static void init() {
     }
 
-    public static void SetMemoryLimit() {
 
-
-    }
-
-    public static void SetMaxStackSize() {
-
-    }
 
     @Nullable
     public static QJSRuntime createJSRuntime() {

@@ -13,6 +13,28 @@ public class QJSRuntime {
         this.instance = instance;
     }
 
+    public  void setMemoryLimit(long memoryLimit) {
+        if (instance == 0) {
+            return;
+        }
+        if(memoryLimit<0){
+            memoryLimit =0;
+        }
+        QuickJSJNI.nativeSetMemoryLimit(instance,memoryLimit);
+
+    }
+
+    public void setMaxStackSize(long stackSize) {
+        if (instance == 0) {
+            return;
+        }
+        if(stackSize < 0){
+            stackSize = 0;
+            QuickJSJNI.nativeSetMaxStackSize(instance,stackSize);
+        }
+
+    }
+
     public int run(String script) {
         if (instance != 0) {
             return QuickJSJNI.nativeEvalExpr(instance, script);

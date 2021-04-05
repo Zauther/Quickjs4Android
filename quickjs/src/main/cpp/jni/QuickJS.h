@@ -8,11 +8,12 @@
 
 class QuickJS {
 private:
-    JSRuntime * qjsRuntime;
-    JSContext * qjsContext;
+    JSRuntime * runtime;
+    JSContext * context;
+
 public:
     JSRuntime * createNewQJSRuntime();
-    JSContext * createNewQJSContext();
+    JSContext * getQJSContext();
 
     int eval();
 
@@ -26,7 +27,6 @@ public:
 
     static int eval_buf(JSContext *ctx, const void *buf, int buf_len,
                          const char *filename, int eval_flags);
-
 
 };
 

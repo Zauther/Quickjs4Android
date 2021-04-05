@@ -8,6 +8,7 @@ public class QuickJSJNI {
     static {
         try {
             System.loadLibrary("quickjs4android");
+            System.loadLibrary("ndklogmodule");
         } catch (Exception e) {
             Log.e(TAG, e.toString());
         }
@@ -23,6 +24,9 @@ public class QuickJSJNI {
     }
 
     public native static long nativeCreateJSRuntime();
+    public native static void nativeSetMemoryLimit(long rtmInstance,long limit);
+    public native static void nativeSetMaxStackSize(long rtmInstance,long size);
 
-    public native static int nativeEvalExpr(long instance,String expr);
+
+    public native static int nativeEvalExpr(long rtmInstance,String expr);
 }

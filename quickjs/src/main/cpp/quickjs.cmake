@@ -2,25 +2,49 @@
 include(FetchContent)
 FetchContent_Declare(quickjs
         GIT_REPOSITORY https://github.com/bellard/quickjs.git
-        GIT_TAG master)
+        GIT_TAG b5e62895c619d4ffc75c9d822c8d85f1ece77e5b)
 FetchContent_MakeAvailable(quickjs)
 
 option(LEAK_TRIGGER "Add a leak trigger" FALSE)
 
+##### QJS_CONFIG_VERSION #####
 set(QJS_CONFIG_VERSION)
 #file(READ ${quickjs_SOURCE_DIR}/VERSION QJS_CONFIG_VERSION)
 #string(REGEX REPLACE "\n$" "" QJS_CONFIG_VERSION "${QJS_CONFIG_VERSION}")
-file(STRINGS ${quickjs_SOURCE_DIR}/VERSION  QJS_CONFIG_VERSION)
+file(STRINGS ${quickjs_SOURCE_DIR}/VERSION QJS_CONFIG_VERSION)
 message("===${QJS_CONFIG_VERSION}===")
 #add_definitions(-DCONFIG_VERSION="${QJS_CONFIG_VERSION}")
 
+if (QJC_HOST_PLANTFORM MATCHES "Darwin")
+    set(CONFIG_DARWIN)
+endif ()
+
+if (CMAKE_BUILD_TYPE MATCHES "Release")
+    set(CONFIG_LTO)
+endif ()
+
+if (DEFINED CONFIG_DARWIN)
+    set(CONFIG_CLANG)
+    set(CONFIG_DEFAULT_AR)
+endif ()
+
+# include the code for BigInt/BigFloat/BigDecimal and math mode
+#set(CONFIG_BIGNUM)
+
+if (DEFINED CONFIG_CLANG)
+    set(HOST_CC "clang")
+else ()
+    set(HOST_CC "gcc")
+endif ()
+
+
 if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
     set(CONFIG_CC clang)
-else()
+else ()
     set(CONFIG_CC gcc)
-endif()
+endif ()
 
-set(COMMON_FLAGS -D_GNU_SOURCE -DCONFIG_VERSION=\"${CONFIG_VERSION}\" -DCONFIG_CC=\"${CONFIG_CC}\" -DCONFIG_PREFIX=\"/usr/local\" -DCONFIG_BIGNUM)
+set(COMMON_FLAGS -D_GNU_SOURCE -DCONFIG_VERSION=\"${QJS_CONFIG_VERSION}\" -DCONFIG_CC=\"${CONFIG_CC}\" -DCONFIG_PREFIX=\"/usr/local\" -DCONFIG_BIGNUM)
 if (CMAKE_BUILD_TYPE STREQUAL "Debug")
     set(COMMON_FLAGS ${COMMON_FLAGS} -DDUMP_LEAKS)
 endif (CMAKE_BUILD_TYPE STREQUAL "Debug")
@@ -29,7 +53,6 @@ if (LEAK_TRIGGER)
     # Use printf as leak_trigger
     set(COMMON_FLAGS ${COMMON_FLAGS} -Dprintf=leak_trigger)
 endif (LEAK_TRIGGER)
-
 
 
 ## set quickjs comple cmd
@@ -65,9 +88,9 @@ set(QUICKJS_LIB_SOURCES
         )
 include_directories(${quickjs_SOURCE_DIR})
 
-add_library(quickjs  SHARED ${QUICKJS_LIB_SOURCES})
+add_library(quickjs SHARED ${QUICKJS_LIB_SOURCES})
 target_compile_options(quickjs PRIVATE ${COMMON_FLAGS})
-target_include_directories(quickjs PUBLIC  ${quickjs_SOURCE_DIR})
+target_include_directories(quickjs PUBLIC ${quickjs_SOURCE_DIR})
 
 #if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
 #    set(CONFIG_CC clang)
