@@ -4,9 +4,9 @@
 #include <quickjs.h>
 #include <android/log.h>
 
-#ifndef LOGI(...)
+#ifndef LOGI
 #define LOGI(...) ((void)__android_log_print(ANDROID_LOG_INFO,"ndklogmodule",__VA_ARGS__))
-#endif
+#endif // LOGI(...)
 //#ifndef LOGE(...)
 //#define LOGE(...) ((void)__android_log_print(ANDROID_LOG_ERROR,"ndklogmodule",__VA_ARGS__))
 

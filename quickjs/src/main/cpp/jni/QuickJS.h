@@ -12,15 +12,20 @@ private:
     JSContext * context;
 
 public:
-    JSRuntime * createNewQJSRuntime();
-    JSContext * getQJSContext();
+    static JSRuntime * createNewQJSRuntime();
+    static void setMemoryLimit(JSRuntime *runtime, long limit);
+    static void setMaxStackSize(JSRuntime *runtime, long size);
+    static void releaseQJSRuntime(JSRuntime *runtime);
 
-    int eval();
+    static JSContext * newQJSContext(JSRuntime *runtime);
+    static void releaseQJSContext(JSContext *context);
+
+    static JSValue* eval(JSContext *ctx, const char *buf, int buf_len,
+             const char *filename, int eval_flags);
 
     int eval_file(JSContext *ctx, const char *filename, int module);
 
-    void setMemoryLimit();
-    void setMaxStackSize();
+
 
 
     static int eval_expr(JSContext *ctx, const char * expr);

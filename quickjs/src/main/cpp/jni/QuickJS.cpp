@@ -8,6 +8,19 @@
 #include <quickjs.h>
 #include <cutils.h>
 #include <cstring>
+#include "qjslog.h"
+
+
+#define COPY_JS_VALUE(JS_CONTEXT, JS_VALUE, RESULT)                                    \
+    do {                                                                               \
+        void *__copy__ = js_malloc_rt(JS_GetRuntime(JS_CONTEXT), sizeof(JSValue));     \
+        if (__copy__ != NULL) {                                                        \
+            memcpy(__copy__, &(JS_VALUE), sizeof(JSValue));                            \
+            (RESULT) = static_cast<JSValue *>(__copy__);                                                       \
+        } else {                                                                       \
+            JS_FreeValue((JS_CONTEXT), (JS_VALUE));                                    \
+        }                                                                              \
+    } while (0)
 
 int has_suffix(const char *str, const char *suffix)
 {
@@ -35,40 +48,51 @@ JSContext * JS_NewCustomContext(JSRuntime *rt) {
 }
 
 JSRuntime *QuickJS::createNewQJSRuntime() {
-    runtime = JS_NewRuntime();
+    JSRuntime *runtime = JS_NewRuntime();
     if (!runtime)
         return nullptr;
     js_std_set_worker_new_context_func(JS_NewCustomContext);
     js_std_init_handlers(runtime);
-    context = JS_NewCustomContext(runtime);
-    if(!context){
-        return nullptr;
-    }
     /* loader for ES6 modules */
     JS_SetModuleLoaderFunc(runtime, NULL, js_module_loader, NULL);
-    const char *str = "import * as std from 'std';\n"
-                      "import * as os from 'os';\n"
-                      "globalThis.std = std;\n"
-                      "globalThis.os = os;\n";
-    eval_buf(context, str, strlen(str), "<input>", JS_EVAL_TYPE_MODULE);
     return runtime;
 }
 
-JSContext *QuickJS::getQJSContext() {
-//    if (!qjsRuntime) {
-//        return nullptr;
-//    }
-//    qjsContext = JS_NewContext(qjsRuntime);
-//    if (!qjsContext) {
-//        return nullptr;
-//    }
-//
-//    js_init_module_std(qjsContext, "std");
-//    js_init_module_os(qjsContext, "os");
-//
-//    JS_SetModuleLoaderFunc(qjsRuntime, nullptr, js_module_loader, nullptr);
-    return context;
+JSContext *QuickJS::newQJSContext(JSRuntime *runtime) {
+    if (!runtime) {
+        return nullptr;
+    }
+
+
+    JSContext * ctx = JS_NewContext(runtime);
+    if (!ctx) {
+        return nullptr;
+    }
+
+    JS_AddIntrinsicBigFloat(ctx);
+    JS_AddIntrinsicBigDecimal(ctx);
+    JS_AddIntrinsicOperators(ctx);
+    JS_EnableBignumExt(ctx, TRUE);
+
+    js_init_module_std(ctx, "std");
+    js_init_module_os(ctx, "os");
+    return ctx;
 }
+
+void QuickJS::setMemoryLimit(JSRuntime *runtime, long limit) {
+    if(limit!=0){
+        JS_SetMemoryLimit(runtime, limit);
+    }
+}
+
+
+void QuickJS::setMaxStackSize(JSRuntime *runtime, long size) {
+    if(size!=0){
+        JS_SetMaxStackSize(runtime, size);
+    }
+}
+
+
 
 int QuickJS::eval_buf(JSContext *ctx, const void *buf, int buf_len,
                       const char *filename, int eval_flags) {
@@ -122,5 +146,30 @@ int QuickJS::eval_file(JSContext *ctx, const char *filename, int module) {
 
 int QuickJS::eval_expr(JSContext *ctx,const char *expr) {
     return QuickJS::eval_buf(ctx, expr, strlen(expr), "<cmdline>", 0);
+}
+
+void QuickJS::releaseQJSRuntime(JSRuntime *runtime) {
+    JS_FreeRuntime(runtime);
+}
+
+void QuickJS::releaseQJSContext(JSContext *context) {
+    JS_FreeContext(context);
+}
+
+JSValue *
+QuickJS::eval(JSContext *ctx, const char *buf, int buf_len, const char *filename, int eval_flags) {
+
+    JSValue *result = nullptr;
+    if (buf != nullptr && filename != nullptr) {
+        JSValue val = JS_Eval(ctx, buf, buf_len, filename, eval_flags);
+//        void *_copy_ = js_malloc_rt(JS_GetRuntime(ctx), sizeof(JSValue));
+//        if (_copy_ != nullptr) {
+//            memcpy(_copy_, &(val), sizeof(JSValue));
+//            (result) = static_cast<JSValue *>(_copy_);
+//        }
+//        JS_FreeValue((ctx), (val));
+        COPY_JS_VALUE(ctx,val,result);
+    }
+    return result;
 }
 
