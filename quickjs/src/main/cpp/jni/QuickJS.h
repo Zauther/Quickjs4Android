@@ -5,6 +5,8 @@
 #ifndef QUICKJS4ANDROID_QUICKJS_H
 #define QUICKJS4ANDROID_QUICKJS_H
 #include <quickjs.h>
+#include <jni.h>
+
 
 class QuickJS {
 private:
@@ -12,6 +14,8 @@ private:
     JSContext * context;
 
 public:
+
+
     static JSRuntime * createNewQJSRuntime();
     static void setMemoryLimit(JSRuntime *runtime, long limit);
     static void setMaxStackSize(JSRuntime *runtime, long size);

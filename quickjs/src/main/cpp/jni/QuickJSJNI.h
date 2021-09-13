@@ -10,6 +10,7 @@
 class QuickJSJNI {
 public:
     static bool RegisterApi(JNIEnv *env);
+
 };
 
 

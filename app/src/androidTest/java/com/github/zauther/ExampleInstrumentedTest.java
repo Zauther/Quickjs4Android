@@ -1,6 +1,7 @@
 package com.github.zauther;
 
 import android.content.Context;
+import android.util.Log;
 
 import androidx.test.platform.app.InstrumentationRegistry;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
@@ -9,6 +10,10 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import static org.junit.Assert.*;
+
+import com.github.zauther.quickjs.jni.QJSContext;
+import com.github.zauther.quickjs.jni.QJSInt;
+import com.github.zauther.quickjs.jni.QJSRuntime;
 
 /**
  * Instrumented test, which will execute on an Android device.
@@ -22,5 +27,34 @@ public class ExampleInstrumentedTest {
         // Context of the app under test.
         Context appContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
         assertEquals("com.github.zauther", appContext.getPackageName());
+    }
+
+
+    @Test
+    public void testExpr(){
+        QJSRuntime runtime = QJSRuntime.newQJSRuntime();
+        if(runtime!=null){
+            QJSContext qjsContext = runtime.newQJSContext();
+            if(qjsContext!=null){
+                QJSInt a= qjsContext.eval("i=1+2;","",QJSInt.class);
+                Log.i("QuickJS",""+ a.getValue());
+                a.release(qjsContext);
+            }
+        }
+
+    }
+
+    @Test
+    public void testConsole(){
+        QJSRuntime runtime = QJSRuntime.newQJSRuntime();
+        if(runtime!=null){
+            QJSContext qjsContext = runtime.newQJSContext();
+            if(qjsContext!=null){
+                QJSInt a= qjsContext.eval("console.log(\"Hello World\");console.log(\"Hello \\n World\")","",QJSInt.class);
+                Log.i("QuickJS",""+ a.getValue());
+                a.release(qjsContext);
+            }
+        }
+
     }
 }

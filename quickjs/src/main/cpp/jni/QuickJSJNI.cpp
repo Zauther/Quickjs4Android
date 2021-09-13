@@ -9,6 +9,82 @@
 #include "qjslog.h"
 #include <sstream>
 
+JavaVM *g_VM;
+
+static void JAVA_Console(const char *_str){
+    JNIEnv *env;
+
+    //获取当前native线程是否有没有被附加到jvm环境中
+    if(g_VM== nullptr){
+        return;
+    }
+    bool mNeedDetach;
+    int getEnvStat = g_VM->GetEnv((void **) &env,JNI_VERSION_1_6);
+//    if (getEnvStat == JNI_EDETACHED) {
+//        //如果没有， 主动附加到jvm环境中，获取到env
+//        if (g_VM->AttachCurrentThread( &env, NULL) != 0) {
+//            return;
+//        }
+//        mNeedDetach = JNI_TRUE;
+//    }
+    //通过全局变量g_obj 获取到要回调的类
+    jclass clazz = env->FindClass("com/github/zauther/quickjs/module/Console");
+
+    if (clazz == nullptr) {
+//        g_VM->DetachCurrentThread();
+        return;
+    }
+    //获取要回调的方法ID
+    jmethodID logID = env->GetStaticMethodID(clazz,
+                                             "log", "(Ljava/lang/String;)V");
+    if (logID == nullptr) {
+        return;
+    }
+    jstring  str= env->NewStringUTF(_str);
+    env->CallStaticVoidMethod(clazz,logID,str);
+    //释放当前线程
+//    if(mNeedDetach) {
+//        g_VM->DetachCurrentThread();
+//    }
+    env = nullptr;
+}
+
+static JSValue js_print(JSContext *ctx, JSValueConst this_val,
+                        int argc, JSValueConst *argv)
+{
+    int i;
+    const char *str;
+    size_t len;
+
+    for(i = 0; i < argc; i++) {
+        if (i != 0)
+            putchar(' ');
+        str = JS_ToCStringLen(ctx, &len, argv[i]);
+        if (!str)
+            return JS_EXCEPTION;
+
+//        fwrite(str, 1, len, stdout);
+        JAVA_Console(str);
+        JS_FreeCString(ctx, str);
+    }
+    putchar('\n');
+    return JS_UNDEFINED;
+}
+
+
+static void addConsole(JSContext *ctx) {
+    JSValue global_obj, console;
+    global_obj = JS_GetGlobalObject(ctx);
+
+    console = JS_NewObject(ctx);
+    JS_SetPropertyStr(ctx, console, "log",
+                      JS_NewCFunction(ctx, js_print, "log", 1));
+    JS_SetPropertyStr(ctx, global_obj, "console", console);
+}
+
+
+
+
 static jlong CreateQJSRuntime(JNIEnv *env, jclass __unused clazz) {
     JSRuntime *runtime = QuickJS::createNewQJSRuntime();
     return reinterpret_cast<long >(runtime);
@@ -16,7 +92,10 @@ static jlong CreateQJSRuntime(JNIEnv *env, jclass __unused clazz) {
 
 static jlong NewQJSContext(JNIEnv *env, jclass __unused clazz, jlong runtime) {
     auto *_runtime = reinterpret_cast<JSRuntime * >(runtime);
-    return reinterpret_cast<long >(QuickJS::newQJSContext(_runtime));
+
+    JSContext * ctx = QuickJS::newQJSContext(_runtime);
+    addConsole(ctx);
+    return reinterpret_cast<long >(ctx);
 }
 
 static void SetMemoryLimit(JNIEnv *env, jclass __unused clazz, jlong runtime, jlong limit) {
@@ -200,5 +279,6 @@ bool QuickJSJNI::RegisterApi(JNIEnv *env) {
     if (clazz == nullptr) {
         return false;
     }
+    env->GetJavaVM(&g_VM);
     return env->RegisterNatives(clazz, gMethod, size(gMethod)) == 0;
 }

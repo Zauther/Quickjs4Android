@@ -11,6 +11,7 @@
 #include "qjslog.h"
 
 
+
 #define COPY_JS_VALUE(JS_CONTEXT, JS_VALUE, RESULT)                                    \
     do {                                                                               \
         void *__copy__ = js_malloc_rt(JS_GetRuntime(JS_CONTEXT), sizeof(JSValue));     \
@@ -44,6 +45,7 @@ JSContext * JS_NewCustomContext(JSRuntime *rt) {
     /* system modules */
     js_init_module_std(ctx, "std");
     js_init_module_os(ctx, "os");
+
     return ctx;
 }
 

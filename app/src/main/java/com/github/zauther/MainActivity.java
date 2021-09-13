@@ -32,7 +32,7 @@ public class MainActivity extends AppCompatActivity {
         if(runtime!=null){
            QJSContext qjsContext = runtime.newQJSContext();
            if(qjsContext!=null){
-              QJSInt a= qjsContext.eval("1+2","",QJSInt.class);
+              QJSInt a= qjsContext.eval("console.log(\"Hello World\");console.log(\"Hello \\n World\")","",QJSInt.class);
                Log.i("QuickJS",""+ a.getValue());
                a.release(qjsContext);
            }
