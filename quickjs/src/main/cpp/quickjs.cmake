@@ -11,7 +11,11 @@ option(LEAK_TRIGGER "Add a leak trigger" FALSE)
 set(QJS_CONFIG_VERSION)
 #file(READ ${quickjs_SOURCE_DIR}/VERSION QJS_CONFIG_VERSION)
 #string(REGEX REPLACE "\n$" "" QJS_CONFIG_VERSION "${QJS_CONFIG_VERSION}")
-file(STRINGS ${quickjs_SOURCE_DIR}/VERSION QJS_CONFIG_VERSION)
+if(EXISTS "${quickjs_SOURCE_DIR}/VERSION")
+    file(RENAME ${quickjs_SOURCE_DIR}/VERSION ${quickjs_SOURCE_DIR}/_VERSION)  # windows不区分大小写，文件会与version.h冲突
+endif()
+
+file(STRINGS ${quickjs_SOURCE_DIR}/_VERSION QJS_CONFIG_VERSION)
 message("===${QJS_CONFIG_VERSION}===")
 #add_definitions(-DCONFIG_VERSION="${QJS_CONFIG_VERSION}")
 

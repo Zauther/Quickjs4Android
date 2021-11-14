@@ -29,7 +29,7 @@ include("qjsmodule.cmake")
 include_directories(${CMAKE_SOURCE_DIR}/ ${CMAKE_SOURCE_DIR}/jni/ ${CMAKE_SOURCE_DIR}/include/)
 LINK_DIRECTORIES(${CMAKE_SOURCE_DIR}/libs/)
 
-file(GLOB_RECURSE CPP_SRCS jni/*.cpp *.cpp module/*.c)
+file(GLOB_RECURSE CPP_SRCS jni/*.cpp *.cpp module/*.c )
 
 find_library(log-lib log )
 
